@@ -38,27 +38,34 @@ local AUTO_SAVE_TIME = 300 --(Second) Save Data,Memory
 type StateType = "NotReady" | "NoInternet" | "NoAccess" | "Access" | "Error"
 type State = {Total: StateType, Data: StateType, Memory: StateType, Message: StateType}
 
-type KrossSyncMetatablesType<MemoryTemplate,DataTemplat> = {[string]: {[string]:KrossSync<MemoryTemplate,DataTemplat>} | nil}
+type KrossSyncMetatablesType<MemTpl,DataTemplat> = {[string]:KrossSync<MemTpl,DataTemplat> | nil}
 
-type Data<MemoryTemplate,DataTemplate> = {
+type Data<MemTpl,DataTpl> = {
 	lastUpdate: number,
 	dataCreateTime: number,
-	memory: MemoryTemplate,
-	data: DataTemplate,
+	memory: MemTpl,
+	data: DataTpl,
 }
-type KrossSync<MemoryTemplate,DataTemplate> = {
+type KrossSync<MemTpl,DataTpl> = {
 	Store: DataStore,
 	Map: MemoryStoreHashMap,
-	SyncKey: string?,
-	DataTemplate: DataTemplate,
-	MemoryTemplate: MemoryTemplate,
-	Data: Data<MemoryTemplate,DataTemplate>,
-	LastData: Data<MemoryTemplate,DataTemplate>,
+	SyncKey: string|""|number|nil,
+	DataTemplate: DataTpl,
+	MemoryTemplate: MemTpl,
+	Data: Data<MemTpl, DataTpl>,
+	LastData: Data<MemTpl, DataTpl>,
 	IsSynced: boolean,
 	----.signal----
-	OnNewData: signal.Signal<string, Data<MemoryTemplate,DataTemplate> >,
+	OnNewData: signal.Signal<string, Data<MemTpl, DataTpl> >,
 	OnSync: signal.Signal<nil>,
-
+	----:func----
+	Get: (self:KrossSync<MemTpl, DataTpl>, key:string) -> Data<MemTpl|any, DataTpl|any>,
+	Save: (self:KrossSync<MemTpl, DataTpl>, key:string, data:Data<MemTpl, DataTpl>|(old:Data<MemTpl|any, DataTpl|any>)->(Data<MemTpl|any, DataTpl|any>), expiration:number) -> (),
+	--
+	SaveData: (self:KrossSync<MemTpl, DataTpl>, key:string, data:Data<MemTpl, DataTpl>|(old:Data<MemTpl|any, DataTpl|any>)->(Data<MemTpl|any, DataTpl|any>)) -> Data<MemTpl|any, DataTpl|any>,
+	SaveMemory: (self:KrossSync<MemTpl, DataTpl>, key:string, data:Data<MemTpl, DataTpl>|(old:Data<MemTpl|any, DataTpl|any>)->(Data<MemTpl|any ,DataTpl|any>), expiration:number) -> Data<MemTpl|any, DataTpl|any>,
+	----Others----
+	Offline: (self:KrossSync<MemTpl, DataTpl>)->()
 }
 
 local error = function(str,lvl) error(`||{script.Name}|| {tostring(str)}`,lvl) end
@@ -175,10 +182,6 @@ local function ReconcileTable(target, template)
 	end
 end
 
-local function GetData(self:KrossSync<any,any>,DataStore:DataStore,key:string): ...any
-
-end
-
 
 -------------------------------------------------------------------MODULE-------------------------------------
 
@@ -214,64 +217,26 @@ local KrossSync = {} do
 
 
 	function KrossSync:Get(key) 
-
+		
 	end
 
-	function KrossSync:Set(key,data,expiration)
-
-	end
-
-	function KrossSync:Update(key,func,expiration)
-
+	function KrossSync:Save(key,func,expiration)
+		
 	end
 
 	------------------------------------------------------
 
-	function KrossSync:GetData(key)
-
-	end
-
-	function KrossSync:SetData(key,data)
-
-	end
-
-	function KrossSync:UpdateData(key,func)
-
-	end
-
-
-	------------------------------------------------------
-
-	function KrossSync:GetMemory(key)
-
-	end
-
-	function KrossSync:SetMemory(key,data)
-
-	end
-
-	function KrossSync:UpdateMemory(key,func)
-
+	function KrossSync:SaveData(key,data)
+		
 	end
 
 	------------------------------------------------------
 
-	function KrossSync:SendMessage(key,Data)
-
+	function KrossSync:SaveMemory(key,data,expiration)
+		
 	end
 
 	------------------------------------------------------
-
-	function KrossSync:Sync() -- :DeSync
-
-		do
-			local DeSync = {}
-			function DeSync:DeSync()
-
-			end
-			return DeSync
-		end
-	end
 
 	function KrossSync:Offline()
 
@@ -339,7 +304,7 @@ end
 -----------------------:function---------------------
 
 --*FreezedTable* LOW EFFIECIENCY
-function KrossSyncService:SeeKrossSync(SyncKey)
+function KrossSyncService:see(SyncKey)
 	if (SyncKey and typeof(SyncKey) == "string") and KrossSyncMetables[SyncKey] then
 		return table.freeze(DeepCopyTable(KrossSyncMetables[SyncKey]))
 	else
